@@ -60,10 +60,10 @@ public class Form03ListadoReservas extends JDialog {
 	private JComboBox meses;
 	private String[] mesesAño = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
 	private ModeloTablaReservas miModelo;
-	private double PrecioMedio = 5.5;
+	private double PrecioMedio;
 	private double DiasMedia, TotalMes;
 	private int NumeroAlquileres;
-	String mes;
+	private String mes;
 	private Conexion conexion = new Conexion();
 	
 	public void setControlador(Controlador controlador) {
@@ -256,7 +256,7 @@ public class Form03ListadoReservas extends JDialog {
 			mes="12";
 		}
 	}
-	public void PrecioMedio () {
+	public void PrecioMedio() {
 		try {
 			String consulta = "Select avg(coPrecio) as precio_Medio from Coches c join Involucra i on i.inMatricula=c.coMatricula"+
 				" join Reservas r on i.inReserva=r.reCodigo"+
@@ -274,16 +274,15 @@ public class Form03ListadoReservas extends JDialog {
 	}
 	
 	
-	public void DiasMedia () {
+	public void DiasMedia() {
 		try {
-			String consulta = "Select avg(coPrecio) as Precio_Medio from Coches c join Involucra i on i.inMatricula=c.coMatricula"+
-				" join Reservas r on i.inReserva=r.reCodigo"+
-				" where month(r.reFecInicio)= "+mes;
+			String consulta = "select avg(timestampdiff(day, r.reFecInicio, r.reFecFinal)) as Media_Dias from Reservas r where month(r.reFecInicio)="+mes;
+
 			System.out.println(consulta);
 			PreparedStatement ps = (PreparedStatement) conexion.getConnection().prepareStatement(consulta); 
 			ResultSet rs = ps.executeQuery();
 			rs.next();
-			DiasMedia = rs.getDouble("Precio_Medio");
+			DiasMedia = rs.getDouble("Media_Dias");
 			ps.close();
 			conexion.desconectar();
 		}catch (SQLException e) {
@@ -293,7 +292,7 @@ public class Form03ListadoReservas extends JDialog {
 	}
 	
 	
-	public void NumeroAlquileres () {
+	public void NumeroAlquileres() {
 		try {
 			String consulta = "Select count(reCodigo) as Numero_Alquileres from Reservas where month(reFecInicio)="+mes;
 				System.out.println(consulta);
@@ -311,15 +310,16 @@ public class Form03ListadoReservas extends JDialog {
 	}
 	
 	
-	public void TotalMensual () {
+	public void TotalMensual() {
 		try {
-			String consulta = "Select avg(coPrecio) as precio_Medio from Coches c join Involucra i on i.inMatricula=c.coMatricula"+
-				" join Reservas r on i.inReserva=r.reCodigo"+
-				" where month(r.reFecInicio)= "+mes;
+			String consulta = "Select sum(c.coPrecio*timestampdiff(day, r.reFecInicio, r.reFecFinal)) as TotalMes from Coches c"+
+			" inner join Involucra i on c.coMatricula = i.inMatricula"+
+			" inner join Reservas r on i.inReserva = r.reCodigo"+
+			" where month(r.reFecInicio)="+mes;
 			PreparedStatement ps = (PreparedStatement) conexion.getConnection().prepareStatement(consulta); 
 			ResultSet rs = ps.executeQuery();
 			rs.next();
-			TotalMes = rs.getDouble("precio_Medio");
+			TotalMes = rs.getDouble("TotalMes");
 			ps.close();
 			conexion.desconectar();
 		}catch (SQLException e) {

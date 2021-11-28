@@ -28,8 +28,10 @@ import javax.swing.SwingConstants;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-
+import java.util.List;
 import java.awt.event.ActionEvent;
 
 
@@ -42,6 +44,7 @@ public class Form06NuevoCliente extends JDialog {
 	private String DniCliente;
 	private String NombreCliente;
 	private String DireccionCliente;
+	private String validado = "no";
 	private int TelefonoCliente;
 	private JTextField textFieldDni;
 	private JTextField textFieldNombre;
@@ -50,6 +53,8 @@ public class Form06NuevoCliente extends JDialog {
 	private Cliente cliente = new Cliente();
 	private Conexion conexion = new Conexion();
 	private DniCompleto nif = new DniCompleto();
+	private List <Integer> numeros = Arrays.asList(0,1,2,3,4,5,6,7,8,9);
+	private List <Character> letras = Arrays.asList('T','R','W','A','G','M','Y','F','P','D','X','B','N','J','Z','S','Q','V','H','L','C','K','E');
 
 	public void setControlador(Controlador controlador) {
 		this.controlador = controlador;
@@ -128,12 +133,13 @@ public class Form06NuevoCliente extends JDialog {
 	private class BtnAnhadirActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent E) {
 			RecogerDatos();
-			if(conexion.validarDni(DniCliente)) { 
-			    JOptionPane.showMessageDialog(null," El DNI introducido ya existe.","Información", JOptionPane.INFORMATION_MESSAGE);
-			    return;
-			}else {
+			validarDni();
+			if(validado == "si") { 
 				VaciarCampos();
 				controlador.InsertarCliente(cliente);
+				validado = "no";
+			}else {
+				textFieldDni.setText("");
 			}	
 			
 		}
@@ -168,28 +174,92 @@ public class Form06NuevoCliente extends JDialog {
 	}
 	
 	
-	public void validarDni(String dni) {
-		while(nif.patron() == false) {
-            System.out.println("El Dni introducido no contiene "
-                    + "un patrón valido");
-             System.out.print("Introduzca un Dni válido: ");
-             nif.setDniIntroducido(dni);
+	public void validarDni() {
+		String nif = textFieldDni.getText();
+		
+		ArrayList dni = new ArrayList();
+		char caracter;
+		
+		
+			for (int i=0; i<nif.length(); i++){
+				caracter=nif.charAt(i);
+				dni.add(caracter);
+			}
+			
+			if(dni.size()!=9){       //Si el número de digitos del dni es distinto de 9, lanzamos el aviso correspondiente al usuario
+				JOptionPane.showMessageDialog(null," El DNI tiene que contener nueve caracteres.","Información", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+		
+		
+			int index = dni.size() - 1;
+			dni.remove(index);    //Eliminamos el último elemento del ArrayList dni
+			
+			int contador = 0;
+			
+			for (int num=0; num<dni.size(); num++){			
+				for(int n=0; n<numeros.size(); n++){
+					if(n==num){
+						contador+=1;
+					}
+				}
+			}
+			
+			String letraValidada = "no";
+			dni.clear();               //Elimino todos los elementos del ArrayList dni
+			
+			for (int i=0; i<nif.length(); i++){         //Relleno ArrayList dni con los caracteres del dni introducido en el TextField
+				caracter=nif.charAt(i);
+				dni.add(caracter);
+			}
+			
+			char letra = (char) dni.get(dni.size() - 1);            //Guardo en la variable letra el último elemento del ArrayList dni
+			
+			for (int a=0; a<letras.size(); a++){       //Compruebo que el último caracter del dni sea alguna de las letras que están en la lista de letras posibles
+				if(letra == letras.get(a)){
+					letraValidada = "si";
+					break;
+				}
+			}
+			
+			if(contador!=8 || letraValidada == "no"){
+				JOptionPane.showMessageDialog(null," Formato de dni incorrecto.","Información", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+			
+			dni.remove(index);    //Eliminamos el último elemento del ArrayList dni
+			
+			String numeros = "";
+			
+			for(int i=0; i<dni.size(); i++){
+				numeros+=dni.get(i);
+			}
+			
+			int numero = Integer.parseInt(numeros);
+			
+			comprobacion(numero, letra, letras);
+			       
+	}
+	
+	public void comprobacion (int numero, char letra, List<Character> listaLetras) {
+		List<Integer> resto = Arrays.asList(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22);
+		int r =numero%23;
+		
+		String encontrado = "no";
+		
+		for (int i=0;i<resto.size();i++) {
+			if(r==i && letra==listaLetras.get(i)){
+				encontrado = "si";
+			}
 		}
-             nif.getLetraIntroducida();
-             nif.setDniNumero(nif.getDniIntroducido());
-             
-             while(nif.getLetIntro() != nif.getLetraDni()) {
-                 System.out.println("La letra introducida en el Dni "
-                         + "no coincide con la verdadera letra");
-                 System.out.print("Introduzca un Dni válido: ");
-                 nif.setDniIntroducido(dni);
-                 nif.getLetraIntroducida();
-                 nif.setDniNumero(nif.getDniIntroducido());
-             }
-             
-             System.out.println("Bien, el dni " + nif.getDniIntroducido() + 
-                     " es un Dni válido");
-        
+		
+		if(encontrado=="si") {
+		    JOptionPane.showMessageDialog(null," El DNI introducido es verdadero.","Información", JOptionPane.INFORMATION_MESSAGE);
+		    validado = "si";
+		}else {
+		    JOptionPane.showMessageDialog(null," El DNI introducido es falso.","Información", JOptionPane.INFORMATION_MESSAGE);
+		}
+
 	}
 	
 }

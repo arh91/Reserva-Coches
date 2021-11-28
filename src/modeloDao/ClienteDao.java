@@ -144,9 +144,9 @@ public class ClienteDao {
 	public void EliminarReservasCliente(String codigo){
 		Conexion conex= new Conexion();
 		try {
-			String consulta = "DELETE FROM reservas r "+
-					"INNER JOIN involucra i ON r.reCodigo = i.inReserva "+
+			String consulta = "DELETE FROM involucra i "+
 					"INNER JOIN clientes cl ON i.inCliente = cl.clNif "+
+					"INNER JOIN reservas r ON i.inReserva = r.reCodigo "+
 					"WHERE cl.clNif=?";
 			PreparedStatement ps = conex.getConnection().prepareStatement(consulta);
 			ps.setString(1, codigo);
